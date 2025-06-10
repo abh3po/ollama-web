@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "Ollama LLM Extension",
+  "version": "1.0",
+  "description": "A cross-browser extension to interact with a local Ollama LLM, user-friendly for everyone",
+  "host_permissions": [
+    "http://localhost:11434/*",
+    "http://127.0.0.1:11434/*"
+  ],
+  "permissions": [
+    "storage"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "externally_connectable": {
+    "matches": [
+      "*://localhost/*",
+      "*://*.formstr.app/*"
+    ]
+  }
+}
