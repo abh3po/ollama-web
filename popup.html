@@ -10,9 +10,22 @@
   <div class="container">
     <h2>Ollama LLM Chat</h2>
     <input type="text" id="prompt" placeholder="Enter your prompt" />
-    <button id="sendButton">Send</button>
+    <div class="button-container">
+      <select id="modelSelect">
+        <option value="">Select a model</option>
+      </select>
+      <button id="sendButton">Send</button>
+    </div>
     <div id="response">Response will appear here</div>
     <div id="loading" style="display: none;">Loading...</div>
+    <h3>Allowed Domains</h3>
+    <div class="domain-container">
+      <input type="text" id="domainInput" placeholder="Enter domain (e.g., *.example.com/*)" />
+      <button id="addDomainButton">Add</button>
+      <button id="addCurrentDomainButton">Add Current Domain</button>
+      <button id="allowAllButton">Allow All</button>
+    </div>
+    <ul id="domainList"></ul>
   </div>
   <script src="popup.js"></script>
 </body>

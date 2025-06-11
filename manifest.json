@@ -8,7 +8,8 @@
     "http://127.0.0.1:11434/*"
   ],
   "permissions": [
-    "storage"
+    "storage",
+    "activeTab"
   ],
   "action": {
     "default_popup": "popup.html"
@@ -17,9 +18,6 @@
     "service_worker": "background.js"
   },
   "externally_connectable": {
-    "matches": [
-      "*://localhost/*",
-      "*://*.formstr.app/*"
-    ]
+    "matches": ["*://*/*"]
   }
 }
