@@ -48,6 +48,10 @@ button:hover {
   background-color: #0056b3;
 }
 
+#setEndpointButton {
+  flex: 0.5;
+}
+
 #response {
   margin-top: 10px;
   padding: 10px;

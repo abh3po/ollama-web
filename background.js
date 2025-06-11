@@ -1,4 +1,4 @@
-const OLLAMA_BASE_URL = 'http://localhost:11434';
+const DEFAULT_OLLAMA_BASE_URL = 'http://localhost:11434';
 
 const handleOllamaRequest = async (request, sendResponse) => {
     let endpoint = '/api/generate';
@@ -22,30 +22,33 @@ const handleOllamaRequest = async (request, sendResponse) => {
         };
     }
 
-    const url = new URL(endpoint, OLLAMA_BASE_URL).href;
-    console.log("Ollama Extension: Forwarding request to", url);
+    let ollamaBaseUrl = DEFAULT_OLLAMA_BASE_URL;
+    chrome.storage.sync.get("ollamaEndpoint", (data) => {
+      if (data.ollamaEndpoint) {
+        ollamaBaseUrl = data.ollamaEndpoint;
+      }
+      const url = new URL(endpoint, ollamaBaseUrl).href;
+      console.log("Ollama Extension: Forwarding request to", url);
 
-    try {
-        const fetchOptions = {
-            method: options.method,
-            headers: options.headers,
-            body: options.body,
-        };
-
-        const response = await fetch(url, fetchOptions);
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorText}`);
-        }
-
-        const data = endpoint === '/' ? await response.text() : await response.json();
-        sendResponse({ success: true, data: data });
-
-    } catch (error) {
-        console.error("Ollama Extension: Fetch error:", error.message);
-        sendResponse({ success: false, error: error.message });
-    }
+      fetch(url, {
+        method: options.method,
+        headers: options.headers,
+        body: options.body,
+      })
+        .then(response => {
+          if (!response.ok) {
+            return response.text().then(text => {
+              throw new Error(`HTTP error! Status: ${response.status}, Message: ${text}`);
+            });
+          }
+          return endpoint === '/' ? response.text() : response.json();
+        })
+        .then(data => sendResponse({ success: true, data: data }))
+        .catch(error => {
+        //   console.error("Ollama Extension: Fetch error:", error.message);
+          sendResponse({ success: false, error: error.message });
+        });
+    });
 };
 
 // Domain management
@@ -54,13 +57,11 @@ let allowedDomains = [];
 
 chrome.storage.sync.get("allowedDomains", (data) => {
   allowedDomains = data.allowedDomains || defaultDomains;
-  console.log("Ollama Extension: Loaded allowedDomains:", allowedDomains);
 });
 
 function updateDomains(domains, callback) {
   allowedDomains = domains;
   chrome.storage.sync.set({ allowedDomains }, () => {
-    console.log("Ollama Extension: Updated allowedDomains:", allowedDomains);
     if (callback) callback();
   });
 }
@@ -68,9 +69,7 @@ function updateDomains(domains, callback) {
 // Listener for EXTERNAL messages (from web apps)
 chrome.runtime.onMessageExternal.addListener((request, sender, sendResponse) => {
   const senderOrigin = sender.url ? new URL(sender.url).origin + "/*" : "";
-  console.log("Ollama Extension: Received external request from", senderOrigin);
   if (!allowedDomains.includes("*://*/*") && !allowedDomains.includes(senderOrigin)) {
-    // console.error("Ollama Extension: Unauthorized domain", senderOrigin, "Allowed:", allowedDomains);
     sendResponse({ success: false, error: "Unauthorized domain" });
     return true;
   }
@@ -80,7 +79,6 @@ chrome.runtime.onMessageExternal.addListener((request, sender, sendResponse) => 
 
 // Listener for INTERNAL messages (from the popup)
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  console.log("Ollama Extension: Received internal request:", request.type);
   if (request.type === "getDomains") {
     sendResponse({ domains: allowedDomains });
   } else if (request.type === "addDomain") {
@@ -111,6 +109,17 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     updateDomains(["*://*/*"], () => sendResponse({ success: true }));
   } else if (request.type === "removeDomain") {
     updateDomains(allowedDomains.filter(d => d !== request.domain), () => sendResponse({ success: true }));
+  } else if (request.type === "setEndpoint") {
+    const endpointPattern = /^https?:\/\/[a-zA-Z0-9.-]+(:[0-9]+)?$/;
+    if (request.endpoint && endpointPattern.test(request.endpoint)) {
+      chrome.storage.sync.set({ ollamaEndpoint: request.endpoint }, () => sendResponse({ success: true }));
+    } else {
+      sendResponse({ success: false, error: "Invalid endpoint format (e.g., http://localhost:11434)" });
+    }
+  } else if (request.type === "getEndpoint") {
+    chrome.storage.sync.get("ollamaEndpoint", (data) => {
+      sendResponse({ endpoint: data.ollamaEndpoint || DEFAULT_OLLAMA_BASE_URL });
+    });
   } else {
     handleOllamaRequest(request, sendResponse);
   }

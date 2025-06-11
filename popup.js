@@ -2,9 +2,11 @@ document.getElementById("sendButton").addEventListener("click", sendPrompt);
 document.getElementById("addDomainButton").addEventListener("click", addDomain);
 document.getElementById("addCurrentDomainButton").addEventListener("click", addCurrentDomain);
 document.getElementById("allowAllButton").addEventListener("click", allowAllDomains);
+document.getElementById("setEndpointButton").addEventListener("click", setEndpoint);
 window.addEventListener("load", () => {
   fetchModels();
   loadDomains();
+  loadEndpoint();
 });
 
 function fetchModels() {
@@ -98,9 +100,11 @@ function addDomain() {
         domainInput.value = "";
         loadDomains();
       } else {
-        responseDiv.innerText = "Error adding domain.";
+        responseDiv.innerText = response.error || "Error adding domain.";
       }
     });
+  } else {
+    responseDiv.innerText = "Please enter a domain.";
   }
 }
 
@@ -133,6 +137,34 @@ function removeDomain(domain) {
       loadDomains();
     } else {
       responseDiv.innerText = "Error removing domain.";
+    }
+  });
+}
+
+function setEndpoint() {
+  const endpointInput = document.getElementById("endpointInput");
+  const endpoint = endpointInput.value.trim();
+  const responseDiv = document.getElementById("response");
+  if (endpoint) {
+    chrome.runtime.sendMessage({ type: "setEndpoint", endpoint: endpoint }, (response) => {
+      if (response.success) {
+        endpointInput.value = "";
+        loadEndpoint();
+        fetchModels();
+      } else {
+        responseDiv.innerText = response.error || "Error setting endpoint.";
+      }
+    });
+  } else {
+    responseDiv.innerText = "Please enter an endpoint.";
+  }
+}
+
+function loadEndpoint() {
+  const endpointInput = document.getElementById("endpointInput");
+  chrome.runtime.sendMessage({ type: "getEndpoint" }, (response) => {
+    if (response.endpoint) {
+      endpointInput.placeholder = `Current: ${response.endpoint}`;
     }
   });
 }

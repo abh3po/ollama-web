@@ -4,8 +4,7 @@
   "version": "1.0",
   "description": "A cross-browser extension to interact with a local Ollama LLM, user-friendly for everyone",
   "host_permissions": [
-    "http://localhost:11434/*",
-    "http://127.0.0.1:11434/*"
+    "<all_urls>"
   ],
   "permissions": [
     "storage",
