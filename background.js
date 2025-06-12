@@ -10,6 +10,19 @@ const handleOllamaRequest = async (request, sendResponse) => {
     } else if (request.type === 'ollamaRequest') { 
         endpoint = request.endpoint;
         options = request.options;
+    } else if (['pullModel', 'deleteModel', 'showModel', 'chat'].includes(request.type)) {
+        const endpointMap = {
+            pullModel: '/api/pull',
+            deleteModel: '/api/delete',
+            showModel: '/api/show',
+            chat: '/api/chat'
+        };
+        endpoint = endpointMap[request.type];
+        options = {
+            method: request.options?.method || 'POST',
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(request.options?.body || { model: request.model || "llama3.1:latest" })
+        };
     } else { 
         options = {
             method: "POST",
@@ -44,10 +57,6 @@ const handleOllamaRequest = async (request, sendResponse) => {
           return endpoint === '/' ? response.text() : response.json();
         })
         .then(data => sendResponse({ success: true, data: data }))
-        .catch(error => {
-        //   console.error("Ollama Extension: Fetch error:", error.message);
-          sendResponse({ success: false, error: error.message });
-        });
     });
 };
 

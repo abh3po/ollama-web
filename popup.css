@@ -82,12 +82,15 @@ button:hover {
   border-bottom: 1px solid #eee;
 }
 
-#domainList button {
+#domainList li button {
   font-size: 0.9em;
-  padding: 4px;
+  padding: 6px;
   background-color: #dc3545;
+  width: 80px;
+  flex: none;
+  text-align: center;
 }
 
-#domainList button:hover {
+#domainList li button:hover {
   background-color: #a71d2a;
 }
